@@ -4,10 +4,11 @@ services:
   postgres:
     image: postgres
     environment:
+      - POSTGRES_DB=wb
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=password
     ports:
-      - "5532:5532"
+      - "5532:5432"
     volumes:
       - ./data:/var/lib/postgresql/data
   nats-streaming:
