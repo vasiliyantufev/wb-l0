@@ -8,11 +8,6 @@ import (
 	"net/http"
 )
 
-type Row struct {
-	Id   int
-	text string
-}
-
 const portNumber = ":8060"
 
 func home_page(w http.ResponseWriter, r *http.Request) {

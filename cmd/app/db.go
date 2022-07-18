@@ -8,6 +8,11 @@ import (
 	"os"
 )
 
+type Row struct {
+	Id   int
+	text string
+}
+
 func main() {
 	conn, err := pgx.Connect(context.Background(), "postgres://root:password@localhost:5532/wb")
 	if err != nil {
@@ -15,6 +20,10 @@ func main() {
 		os.Exit(1)
 	}
 	defer conn.Close(context.Background())
+
+	_, err = conn.Exec(context.Background(),
+		"INSERT INTO tbl (json) VALUES ($1)",
+		"text2")
 
 	rows, err := conn.Query(context.Background(), "SELECT * FROM tbl")
 	if err != nil {

@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgx/v4"
 	stan "github.com/nats-io/stan.go"
+	"github.com/vasiliyantufev/wb-l0/internal/app"
 	"log"
 	"os"
 	"os/signal"
@@ -35,10 +39,29 @@ func main() {
 	}
 	defer sc.Close()
 
+	conn, err := pgx.Connect(context.Background(), "postgres://root:password@localhost:5532/wb")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer conn.Close(context.Background())
+
 	// Subscribe to the ECHO channel as a queue.
 	// Start with new messages as they come in; don't replay earlier messages.
 	sub, err := sc.QueueSubscribe("ECHO", *queueGroup, func(msg *stan.Msg) {
-		log.Printf("%10s | %s\n", msg.Subject, string(msg.Data))
+		//_, _ = app.ParseMessages(msg.Data)
+
+		message, err := app.ParseMessages(msg.Data)
+		if err != nil {
+			log.Println("no data")
+		} else {
+			log.Println(message)
+			//log.Printf("%10s | %s\n", msg.Subject, message)
+			_, err = conn.Exec(context.Background(),
+				"INSERT INTO tbl (json) VALUES ($1)",
+				message)
+		}
+
 	}, stan.StartWithLastReceived())
 	if err != nil {
 		log.Fatal(err)
