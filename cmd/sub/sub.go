@@ -44,6 +44,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Println("start")
 	// Wait for Ctrl+C
 	doneCh := make(chan bool)
 	go func() {
