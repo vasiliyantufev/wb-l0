@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
+	"github.com/vasiliyantufev/wb-l0/internal/models"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 )
 
 const portNumber = ":8060"
@@ -17,6 +22,7 @@ func home_page(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalf("execution failed: %s", err)
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func test_page(w http.ResponseWriter, r *http.Request) {
@@ -28,13 +34,32 @@ func OrderHandler(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 	id := values.Get("id")
 
-	if id != "" {
-		w.Write([]byte("Order " + id))
-	} else {
-		w.Write([]byte("Order <id>"))
+	conn, err := pgx.Connect(context.Background(), "postgres://root:password@localhost:5532/wb")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer conn.Close(context.Background())
+
+	var order models.Order
+
+	var jsonObj []byte
+	err = conn.QueryRow(context.Background(), "SELECT json FROM tbl WHERE id=$1", id).Scan(&jsonObj)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(jsonObj, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tmpl, _ := template.ParseFiles("./web/templates/show.html")
+	errr := tmpl.Execute(w, order)
+	if errr != nil {
+		log.Fatalf("execution failed: %s", errr)
 	}
 	w.WriteHeader(http.StatusOK)
-
 }
 
 func handleRequest() {
