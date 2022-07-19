@@ -19,29 +19,30 @@ func home_page(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//func test_page(w http.ResponseWriter, r *http.Request) {
-//	fmt.Fprint(w, "Test Page")
-//}
-//func handler(w http.ResponseWriter, r *http.Request, mystr string) {
-//	println(mystr)
-//}
+func test_page(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Test Page"))
+}
 
 func OrderHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+
+	values := r.URL.Query()
+	id := values.Get("id")
+
+	if id != "" {
+		w.Write([]byte("Order " + id))
+	} else {
+		w.Write([]byte("Order <id>"))
+	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Order: %v\n", vars["id"])
+
 }
 
 func handleRequest() {
 	rtr := mux.NewRouter()
 	rtr.HandleFunc("/", home_page)
+	rtr.HandleFunc("/test", test_page)
 
-	//hi := "hello"
-	//rtr.HandleFunc("/order", func(w http.ResponseWriter, r *http.Request) {
-	//	handler(w, r, hi)
-	//})
-
-	rtr.HandleFunc("/order/{id}/", OrderHandler)
+	rtr.HandleFunc("/order", OrderHandler)
 
 	fmt.Printf("Starting application on port %v\n", portNumber)
 	http.ListenAndServe(portNumber, rtr)
