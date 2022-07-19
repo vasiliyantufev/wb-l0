@@ -6,6 +6,50 @@
 
 </head>
 <body>
+<a href="/order">test</a>
+
+<!--<form action="/order">-->
+<!--    <p><input type="text" name="id"></p>-->
+<!--    <button type="submit">Получить json</button></p>-->
+<!--</form>-->
+
+
+
+<div class="p-2">
+    <form class="row g-3" id="form">
+        <div class="col">
+            <input type="text" class="form-control" placeholder="ID" id="idfield">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary mb-3">Получить</button>
+        </div>
+    </form>
+</div>
+
+
+<script>
+    'use strict';
+
+    const form = document.getElementById('form')
+    form.addEventListener('submit', async e => {
+        e.preventDefault()
+        const response = await fetch(`/order/${document.getElementById('idfield').value}`);
+
+        console.log(response)
+
+/*        try {
+            const response = await fetch(`/order/${document.getElementById('idfield').value}`);
+            if (!response.ok) {
+                alert("Сервер вернул ошибку: " + response.status)
+                return
+            }
+            const json = await response.json()
+        } catch (e) {
+            console.log(e)
+            alert("Произошла ошибка")
+        }*/
+    })
+</script>
 
 </body>
 </html>
