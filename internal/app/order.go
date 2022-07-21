@@ -14,9 +14,11 @@ func InsertOrder(message *models.Order, conn *pgx.Conn) (err error) {
 
 	log.Println(message)
 
+	now := time.Now().Unix()
+
 	jsonObj, _ := json.Marshal(message)
 	_, err = conn.Exec(context.Background(),
-		"INSERT INTO orders VALUES ($1, $2)", message.OrderUid, jsonObj)
+		"INSERT INTO orders VALUES ($1, $2, $3)", message.OrderUid, jsonObj, now)
 	if err != nil {
 		return err
 	}
@@ -34,55 +36,49 @@ func GetOrder(id string, conn *pgx.Conn) []byte {
 
 }
 
-func GetInitialCache(conn *pgx.Conn) {
+func GetInitialCache(conn *pgx.Conn) (*cache.Cache, error) {
 
 	cache := cache.NewCache()
 
-	now := time.Now().Unix()
-	period := now - 60*60*24
+	//now := time.Now().Unix()
+	//period := now - 60*60*24
 	//forCache := make([]string, 0, 10)
-
-	query := `
-	SELECT id, json
-	FROM orders o
-	WHERE o.time_of_creation > $1;`
 
 	//query := `
 	//SELECT id, json
-	//FROM orders;
-	//`
+	//FROM orders o
+	//WHERE o.time_of_creation > $1;`
 
-	//rows, err := conn.Query(context.Background(), query)
-	rows, err := conn.Query(context.Background(), query, period)
+	query := `
+	SELECT id, json
+	FROM orders;
+	`
+
+	rows, err := conn.Query(context.Background(), query)
+	//rows, err := conn.Query(context.Background(), query, period)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
-
 	//forCache := make([]string, 0, 10)
-
 	for rows.Next() {
 
 		var id *string
 		var json *string
-
 		err = rows.Scan(
 			&id,
 			&json,
 		)
-
 		if err != nil {
 			log.Fatal(err)
 		}
 		cache.PutOrder(*id, *json)
-
 		//forCache = append(forCache, *json)
 		//log.Printf("forCache: %v", forCache)
 	}
 
 	//log.Printf(cache.GetOrder("b563feb7b2b84b6test"))
+	//log.Fatal("stop")
 
-	log.Fatal("stop")
-
-	return
+	return cache, err
 }

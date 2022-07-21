@@ -45,6 +45,7 @@ func OrderHandler(w http.ResponseWriter, r *http.Request) {
 	var order models.Order
 
 	obj := app.GetOrder(id, conn)
+
 	err = json.Unmarshal(obj, &order)
 	if err != nil {
 		log.Fatal(err)

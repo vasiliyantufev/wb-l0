@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
 	stan "github.com/nats-io/stan.go"
@@ -14,6 +13,7 @@ import (
 )
 
 func main() {
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	var (
 		clusterID  = flag.String("cluster_id", "test-cluster", "Cluster ID")
@@ -41,28 +41,29 @@ func main() {
 
 	conn, err := pgx.Connect(context.Background(), "postgres://root:password@localhost:5532/wb")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer conn.Close(context.Background())
+
+	cache, err := app.GetInitialCache(conn)
+	if err != nil {
+		log.Fatalf("Recovery cache failed:  %v\n", err)
+	}
 
 	// Subscribe to the ECHO channel as a queue.
 	// Start with new messages as they come in; don't replay earlier messages.
 	sub, err := sc.QueueSubscribe("ECHO", *queueGroup, func(msg *stan.Msg) {
-		//_, _ = app.ParseMessages(msg.Data)
 
 		message, err := app.ParseMessages(msg.Data)
 		if err != nil {
 			log.Println("no data")
 		} else {
 
-			app.GetInitialCache(conn)
-			//log.Println(message)
-
-			//cache, err := repo.GetInitialCache(ctx)
-			//cache.PutOrder(message.OrderUid, string(msg.Data))
-
+			cache.PutOrder(message.OrderUid, string(msg.Data))
 			err = app.InsertOrder(message, conn)
+			if err != nil {
+				log.Fatalf("Unable put order to database: %v\n", err)
+			}
 		}
 
 	}, stan.StartWithLastReceived())
