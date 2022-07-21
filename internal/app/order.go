@@ -13,7 +13,6 @@ import (
 func InsertOrder(message *models.Order, conn *pgx.Conn) (err error) {
 
 	log.Println(message)
-
 	now := time.Now().Unix()
 
 	jsonObj, _ := json.Marshal(message)
@@ -25,14 +24,14 @@ func InsertOrder(message *models.Order, conn *pgx.Conn) (err error) {
 	return
 }
 
-func GetOrder(id string, conn *pgx.Conn) []byte {
+func GetOrder(id string, conn *pgx.Conn) ([]byte, error) {
 
 	var jsonObj []byte
 	err := conn.QueryRow(context.Background(), "SELECT json FROM orders WHERE id=$1", id).Scan(&jsonObj)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return jsonObj
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	return jsonObj, err
 
 }
 

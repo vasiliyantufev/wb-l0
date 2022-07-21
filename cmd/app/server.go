@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
 	"github.com/vasiliyantufev/wb-l0/internal/app"
-	"github.com/vasiliyantufev/wb-l0/internal/models"
 	"html/template"
 	"log"
 	"net/http"
@@ -42,19 +41,26 @@ func OrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close(context.Background())
 
-	var order models.Order
-
-	obj := app.GetOrder(id, conn)
-
-	err = json.Unmarshal(obj, &order)
+	cache, err := app.GetInitialCache(conn)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Recovery cache failed:  %v\n", err)
+	}
+
+	cached, found := cache.GetOrder(id)
+
+	if found == false {
+		order, err := app.GetOrder(id, conn)
+		if err != nil {
+			log.Fatal("Order not found")
+		}
+		order, _ = json.Marshal(order)
+		cache.PutOrder(id, string(order))
 	}
 
 	tmpl, _ := template.ParseFiles("./web/templates/show.html")
-	errr := tmpl.Execute(w, order)
-	if errr != nil {
-		log.Fatalf("execution failed: %s", errr)
+	err = tmpl.Execute(w, cached)
+	if err != nil {
+		log.Fatalf("execution failed: %s", err)
 	}
 	w.WriteHeader(http.StatusOK)
 }
