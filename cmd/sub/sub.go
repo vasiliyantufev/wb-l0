@@ -55,11 +55,14 @@ func main() {
 		if err != nil {
 			log.Println("no data")
 		} else {
-			log.Println(message)
-			//log.Printf("%10s | %s\n", msg.Subject, message)
-			_, err = conn.Exec(context.Background(),
-				"INSERT INTO tbl (json) VALUES ($1)",
-				message)
+
+			app.GetInitialCache(conn)
+			//log.Println(message)
+
+			//cache, err := repo.GetInitialCache(ctx)
+			//cache.PutOrder(message.OrderUid, string(msg.Data))
+
+			err = app.InsertOrder(message, conn)
 		}
 
 	}, stan.StartWithLastReceived())

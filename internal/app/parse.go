@@ -6,8 +6,8 @@ import (
 	"github.com/vasiliyantufev/wb-l0/internal/models"
 )
 
-func ParseMessages(data []byte) (*models.Orders, error) {
-	ord := models.Orders{}
+func ParseMessages(data []byte) (*models.Order, error) {
+	ord := models.Order{}
 	err := json.Unmarshal(data, &ord)
 	if err != nil {
 		return nil, err

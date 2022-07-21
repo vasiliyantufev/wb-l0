@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
+	"github.com/vasiliyantufev/wb-l0/internal/app"
 	"github.com/vasiliyantufev/wb-l0/internal/models"
 	"html/template"
 	"log"
@@ -43,13 +44,8 @@ func OrderHandler(w http.ResponseWriter, r *http.Request) {
 
 	var order models.Order
 
-	var jsonObj []byte
-	err = conn.QueryRow(context.Background(), "SELECT json FROM tbl WHERE id=$1", id).Scan(&jsonObj)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = json.Unmarshal(jsonObj, &order)
+	obj := app.GetOrder(id, conn)
+	err = json.Unmarshal(obj, &order)
 	if err != nil {
 		log.Fatal(err)
 	}
