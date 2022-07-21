@@ -25,6 +25,15 @@ func home_page(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func create_page(w http.ResponseWriter, r *http.Request) {
+	tmpl, _ := template.ParseFiles("./web/templates/create.html")
+	err := tmpl.Execute(w, "no data needed")
+	if err != nil {
+		log.Fatalf("execution failed: %s", err)
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 func test_page(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Test Page"))
 }
@@ -70,6 +79,7 @@ func handleRequest() {
 	rtr.HandleFunc("/", home_page)
 	rtr.HandleFunc("/test", test_page)
 
+	rtr.HandleFunc("/create", create_page)
 	rtr.HandleFunc("/order", OrderHandler)
 
 	fmt.Printf("Starting application on port %v\n", portNumber)
