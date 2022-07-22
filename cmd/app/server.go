@@ -11,7 +11,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 )
 
 const portNumber = ":8060"
@@ -45,8 +44,7 @@ func OrderHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := pgx.Connect(context.Background(), "postgres://root:password@localhost:5532/wb")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer conn.Close(context.Background())
 
@@ -74,13 +72,45 @@ func OrderHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func StoreHandler(w http.ResponseWriter, r *http.Request) {
+
+	json := r.FormValue("json")
+
+	conn, err := pgx.Connect(context.Background(), "postgres://root:password@localhost:5532/wb")
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v\n", err)
+	}
+	defer conn.Close(context.Background())
+
+	cache, err := app.GetInitialCache(conn)
+	if err != nil {
+		log.Fatalf("Recovery cache failed:  %v\n", err)
+	}
+
+	message, err := app.ParseMessages([]byte(json))
+	if err != nil {
+		log.Fatalf("Unable data: %v\n", err)
+	} else {
+		cache.PutOrder(message.OrderUid, json)
+		err = app.InsertOrder(message, conn)
+		if err != nil {
+			log.Fatalf("Unable put order to database: %v\n", err)
+		}
+	}
+
+	http.Redirect(w, r, "/", 301)
+}
+
 func handleRequest() {
+
 	rtr := mux.NewRouter()
+
 	rtr.HandleFunc("/", home_page)
 	rtr.HandleFunc("/test", test_page)
 
 	rtr.HandleFunc("/create", create_page)
 	rtr.HandleFunc("/order", OrderHandler)
+	rtr.HandleFunc("/store", StoreHandler).Methods("POST")
 
 	fmt.Printf("Starting application on port %v\n", portNumber)
 	http.ListenAndServe(portNumber, rtr)

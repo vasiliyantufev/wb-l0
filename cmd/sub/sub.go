@@ -56,7 +56,7 @@ func main() {
 
 		message, err := app.ParseMessages(msg.Data)
 		if err != nil {
-			log.Println("no data")
+			log.Fatalf("Unable data: %v\n", err)
 		} else {
 
 			cache.PutOrder(message.OrderUid, string(msg.Data))
