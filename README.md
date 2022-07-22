@@ -30,4 +30,11 @@
    ```go run cmd/pub/pub.go```
 
 4. Run Subscribe <br/>
+
    ```go run cmd/sub/sub.go```
+
+
+## Video <br/>
+
+https://user-images.githubusercontent.com/4541435/180372811-000b23cc-3fa3-4091-a558-1b8a4348727b.mp4
+
